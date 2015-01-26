@@ -3,7 +3,7 @@ require 'spec_helper'
 describe DDC::ControllerBuilder do
   subject { described_class }
 
-  describe '.build_controller' do
+  describe '.build' do
     let(:json_format) {
       format = double('json format')
       expect(format).to receive(:json).and_yield
@@ -20,9 +20,9 @@ describe DDC::ControllerBuilder do
     end
 
     it 'defines the controller class' do
-      subject.build_controller :foo, actions: {
+      subject.build :foo, actions: {
         index: {
-          params: [:current_user, :params],
+          context_params: [:current_user, :params],
           context: 'foo_context_builder#bar',
           service: 'baz_service#qux'
         }
@@ -31,19 +31,19 @@ describe DDC::ControllerBuilder do
     end
 
     it 'raises if there are no actions defined' do
-      expect(->{subject.build_controller :foo, actions: {}}).to raise_exception
-      expect(->{subject.build_controller :foop, {}}).to raise_exception
+      expect(->{subject.build :foo, actions: {}}).to raise_exception
+      expect(->{subject.build :foop, {}}).to raise_exception
     end
 
     it 'raises if an action is missing context' do
-      expect(->{subject.build_controller :foo, actions: {foo: {
-        params: [:current_user, :params],
+      expect(->{subject.build :foo, actions: {foo: {
+        context_params: [:current_user, :params],
         service: 'baz_service#qux'
       }}}).to raise_exception
     end
 
     it 'raises if an action is missing service' do
-      expect(->{subject.build_controller :foo, actions: {foo: {
+      expect(->{subject.build :foo, actions: {foo: {
         context: 'foo_context_builder#bar',
       }}}).to raise_exception
     end
@@ -54,7 +54,7 @@ describe DDC::ControllerBuilder do
       end
 
       expect(FooController).to receive(:before_action).with(:my_before_action)
-      subject.build_controller :foo, 
+      subject.build :foo, 
         before_actions: [:my_before_action],
         actions: {
           index: {
@@ -93,9 +93,9 @@ describe DDC::ControllerBuilder do
         { object: :some_obj, status: :ok }
       end
 
-      subject.build_controller :foo, actions: {
+      subject.build :foo, actions: {
         index: {
-          params: [:current_user, :params],
+          context_params: [:current_user, :params],
           context: 'foo_context_builder#bar',
           service: 'baz_service#qux'
         }
@@ -113,9 +113,9 @@ describe DDC::ControllerBuilder do
         def respond_to; end
       end
 
-      subject.build_controller :foo, actions: {
+      subject.build :foo, actions: {
         index: {
-          params: [:current_user, :params],
+          context_params: [:current_user, :params],
           context: 'foo_context_builder#bar',
           service: 'baz_service#qux'
         }
@@ -151,7 +151,7 @@ describe DDC::ControllerBuilder do
         def some_user; end
         def render(args); end
       end
-      subject.build_controller :foo, 
+      subject.build :foo, 
         params: [:current_user, :params],
         actions: {
           index: {

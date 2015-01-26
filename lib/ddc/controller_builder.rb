@@ -9,7 +9,7 @@ module DDC
       error: 500
     }
     class << self
-      def build_controller(controller_name, config)
+      def build(controller_name, config)
         klass = find_or_create_class(controller_name)
         setup_before_actions!(klass, config)
         setup_actions!(controller_name, klass, config)
@@ -39,18 +39,18 @@ module DDC
         raise "Must specify actions" if actions.blank?
 
         actions.each do |action, action_desc|
-          setup_action! controller_name, klass, action, action_desc
+          setup_action! controller_name, klass, action, action_desc, config
         end
       end
 
-      def setup_action!(controller_name, klass, action, action_desc)
+      def setup_action!(controller_name, klass, action, action_desc, config)
         raise "Must specify a service for each action" unless action_desc[:service].present?
         raise "Must specify a context for each action" unless action_desc[:context].present?
         proc_klass, proc_method = parse_class_and_method(action_desc[:service])
         context_klass, context_method = parse_class_and_method(action_desc[:context])
 
         klass.send :define_method, action do
-          context_params = (action_desc[:params] || DEFAULT_CONTEXT_PARAMS).inject({}) do |h, param|
+          context_params = (action_desc[:context_params] || config[:context_params] || DEFAULT_CONTEXT_PARAMS).inject({}) do |h, param|
             h[param] = send param
             h
           end

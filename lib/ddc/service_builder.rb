@@ -1,19 +1,27 @@
 module DDC
   class ServiceBuilder
     def self.build(model_type)
-      Class.new  do
-        include ResponseBuilder
+      Class.new do
+        include DDC::ResponseBuilder
         class << self
-          attr_accessor :model_type, :ar_model
+          attr_accessor :model_type, :ar_model, :finder
         end
 
         @model_type = model_type
         ar_class_name = model_type.to_s.camelize
         @ar_model = Object.const_get(ar_class_name)
 
+        @finder = nil
+        begin
+          @finder = Object.const_get("#{ar_class_name}Finder")
+        rescue NameError
+          # we use the AR Model as a fallback 
+        end
+
         def find(context)
-          id = context.values_at :id
-          me = self.class.ar_model.where id: id
+          id = context[:id]
+          me = custom_finder ? custom_finder.find(context) : 
+                               ar_model.where(id: id)
           if me.present?
             ok(me)
           else
@@ -21,8 +29,9 @@ module DDC
           end
         end
 
-        def find_all(context)
-          mes = self.class.ar_model.all
+        def find_all(context={})
+          mes = custom_finder ? custom_finder.find_all(context) : 
+                                ar_model.all
           ok(mes)
         end
 
@@ -45,9 +54,14 @@ module DDC
         end
 
         private
-        def find_for_user(user, id)
-          return nil if id.nil? || !UUIDUtil.valid?(id)
+        def custom_finder
+          self.class.finder
         end
+
+        def ar_model
+          self.class.ar_model
+        end
+
       end
     end
   end
