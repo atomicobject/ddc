@@ -27,7 +27,7 @@ Or install it yourself as:
 `controllers/monkeys_controller.rb`
 
 ```ruby
-DDC::ControllerBuilder.build :monkeys
+DDC::ControllerBuilder.build :monkeys,
   before_actions: [:authenticate_user!],
   actions: {
     show: {
