@@ -40,8 +40,12 @@ module DDC
           me = self.class.ar_model.where id: id
 
           if me.present?
-            me.update_attributes translated_updates
-            ok(me)
+            success = me.update_attributes translated_updates
+            if success
+              ok(me)
+            else
+              not_valid(me)
+            end
           else
             not_found
           end
@@ -50,7 +54,23 @@ module DDC
         def create(context)
           attributes = context.values_at self.class.model_type
           me = self.class.ar_model.create attributes
-          created(me)
+          if me.persisted?
+            created(me)
+          else
+            not_valid(me)
+          end
+        end
+
+        def delete(context)
+          id = context[:id]
+          me = custom_finder ? custom_finder.find(context) : 
+                               ar_model.where(id: id)
+          if me.present?
+            me.destroy
+            deleted
+          else
+            not_found
+          end
         end
 
         private

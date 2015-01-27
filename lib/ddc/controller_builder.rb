@@ -6,7 +6,9 @@ module DDC
       created: 201,
       not_found: 404,
       not_allowed: 401,
-      error: 500
+      error: 500,
+      not_valid: 422,
+      deleted: 204
     }
     class << self
       def build(controller_name, config)
