@@ -1,6 +1,6 @@
 # DDC
 
-DDC (Data Driven Controllers) let's you declare how to wire Rails into your app without the need for code. A Rails controller's job is parsing/interpreting parameters to send to your application domain and taking those results and translating them back out to an HTTP result (html/status/headers). DDC removes the need for all the boiler plate controller code and tests.
+DDC (Data Driven Controllers) lets you declare how to wire Rails into your app without the need for code. A Rails controller's job is parsing/interpreting parameters to send to your application domain and taking those results and translating them back out to an HTTP result (html/status/headers). DDC removes the need for all the boiler plate controller code and tests.
 
 By adhering to a couple of interfaces, you can avoid writing most controller code and tests. See this [blog post]( http://spin.atomicobject.com/2015/01/26/data-driven-rails-controllers) for more information.
 
