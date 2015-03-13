@@ -13,7 +13,7 @@ module DDC
     end
 
     def not_valid(obj)
-      {status: :not_valid, object: obj, errors: obj.errors.to_hash}
+      {status: :not_valid, errors: obj.errors.to_hash}
     end
 
     def deleted(obj)
