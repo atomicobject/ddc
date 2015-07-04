@@ -175,6 +175,57 @@ describe DDC::ControllerBuilder do
     class BazService
       def qux(context) {} end
     end
+
+    it 'uses specified serializer json render calls' do
+      class FooController
+        def current_user; end
+        def some_user; end
+        def render(args); end
+        def respond_to; end
+      end
+      controller = FooController.new
+      expect(controller).to receive_messages( params: {a: :b})
+
+
+      subject.build :foo, 
+        actions: {
+          index: {
+            context: 'foo_context_builder#bar',
+            service: 'baz_service#qux',
+            serializer: MySerializer
+          }
+
+        }
+
+      render_args = nil
+      expect(controller).to receive(:render) do |args|
+        render_args = args
+      end
+      expect(controller).to receive(:respond_to) do |&block|
+        block.call(json_format)
+      end
+      expect_any_instance_of(FooContextBuilder).to receive(:bar).with(hash_including(
+        params: {a: :b})) { :context }
+
+      expect_any_instance_of(BazService).to receive(:qux).with(:context) do 
+        { object: :some_obj, status: :ok }
+      end
+
+      controller.index
+      
+      expect(render_args[:serializer]).to eq(MySerializer)
+    end
+
+    class MySerializer
+    end
+
+    class FooContextBuilder
+      def bar(opts) {} end
+    end
+
+    class BazService
+      def qux(context) {} end
+    end
   end
 
 end

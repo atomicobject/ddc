@@ -76,10 +76,15 @@ module DDC
           respond_to do |format|
             format.json do
               if obj.nil?
-                render json: {errors: errors}, status: status
+                render_opts = { 
+                  json: {errors: errors}, status: status }
               else
-                render json: obj, status: status
+                render_opts = { json: obj, status: status }
               end
+
+              render_opts[:serializer] = action_desc[:serializer] if action_desc.has_key? :serializer
+              render_opts[:each_serializer] = action_desc[:each_serializer] if action_desc.has_key? :each_serializer
+              render render_opts
             end
             format.html do
               result.each do |k,v|
