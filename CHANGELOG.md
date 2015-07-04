@@ -1,5 +1,9 @@
 # DDC Changelog
 
+### 0.1.2
+
+* add :serializer and :each_serializer as action options
+
 ### 0.1.1
 
 * Fix update status code
