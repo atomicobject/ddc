@@ -82,8 +82,7 @@ module DDC
                 render_opts = { json: obj, status: status }
               end
 
-              render_opts[:serializer] = action_desc[:serializer] if action_desc.has_key? :serializer
-              render_opts[:each_serializer] = action_desc[:each_serializer] if action_desc.has_key? :each_serializer
+              render_opts = (action_desc[:render_opts]).merge(render_opts) if action_desc.has_key? :render_opts
               render render_opts
             end
             format.html do
