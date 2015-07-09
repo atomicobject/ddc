@@ -192,7 +192,9 @@ describe DDC::ControllerBuilder do
           index: {
             context: 'foo_context_builder#bar',
             service: 'baz_service#qux',
-            serializer: MySerializer
+            render_opts: {
+              serializer: MySerializer
+            }
           }
 
         }

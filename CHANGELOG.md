@@ -1,5 +1,9 @@
 # DDC Changelog
 
+### 0.1.4
+
+* remove :serializer and :each_serializer,  use :render_opts to pass a hash
+
 ### 0.1.2
 
 * add :serializer and :each_serializer as action options
