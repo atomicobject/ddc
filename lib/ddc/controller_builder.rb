@@ -22,11 +22,11 @@ module DDC
       def find_or_create_class(controller_name)
         controller_klass_name = controller_name.to_s.camelize+'Controller'
         klass = nil
-        if Object.constants.include?(controller_klass_name.to_sym)
-          klass = Object.const_get(controller_klass_name)
+        if Object.qualified_const_defined?(controller_klass_name)
+          klass = Object.qualified_const_get(controller_klass_name)
         else
           klass = Class.new(ApplicationController)
-          Object.const_set(controller_klass_name, klass)
+          Object.qualified_const_set(controller_klass_name, klass)
         end
       end
 
@@ -76,7 +76,7 @@ module DDC
           respond_to do |format|
             format.json do
               if obj.nil?
-                render_opts = { 
+                render_opts = {
                   json: {errors: errors}, status: status }
               else
                 render_opts = { json: obj, status: status }
