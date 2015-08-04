@@ -176,49 +176,88 @@ describe DDC::ControllerBuilder do
       def qux(context) {} end
     end
 
-    it 'uses specified serializer json render calls' do
-      class FooController
-        def current_user; end
-        def some_user; end
-        def render(args); end
-        def respond_to; end
-      end
-      controller = FooController.new
-      expect(controller).to receive_messages( params: {a: :b})
+    context 'render_opts' do
 
+      let (:controller) {
+        class FooController
+          def current_user; end
+          def some_user; end
+          def render(args); end
+          def respond_to; end
+        end
+        FooController.new
+      }
+      before do
+        expect(controller).to receive_messages( params: {a: :b})
 
-      subject.build :foo,
-        actions: {
-          index: {
-            context: 'foo_context_builder#bar',
-            service: 'baz_service#qux',
-            render_opts: {
-              serializer: MySerializer
+        subject.build :foo,
+          actions: {
+            index: {
+              context: 'foo_context_builder#bar',
+              service: 'baz_service#qux',
+              render_opts: {
+                serializer: MySerializer
+              }
+            },
+            show: {
+              context: 'foo_context_builder#bar',
+              service: 'baz_service#qux',
+              render_opts: {
+                serializer: MySerializer
+              },
+              object_render_opts: {
+                serializer: MyObjectSerializer
+              },
+              error_render_opts: {
+                serializer: MyErrorSerializer
+              },
             }
+
           }
 
-        }
-
-      render_args = nil
-      expect(controller).to receive(:render) do |args|
-        render_args = args
-      end
-      expect(controller).to receive(:respond_to) do |&block|
-        block.call(json_format)
-      end
-      expect_any_instance_of(FooContextBuilder).to receive(:bar).with(hash_including(
-        params: {a: :b})) { :context }
-
-      expect_any_instance_of(BazService).to receive(:qux).with(:context) do
-        { object: :some_obj, status: :ok }
+        @render_args = nil
+        expect(controller).to receive(:render) do |args|
+          @render_args = args
+        end
+        expect(controller).to receive(:respond_to) do |&block|
+          block.call(json_format)
+        end
+        expect_any_instance_of(FooContextBuilder).to receive(:bar).with(hash_including(
+          params: {a: :b})) { :context }
       end
 
-      controller.index
+      it 'uses specified serializer json render calls' do
+        expect_any_instance_of(BazService).to receive(:qux).with(:context) do
+          { object: :some_obj, status: :ok }
+        end
+        controller.index
+        expect(@render_args[:serializer]).to eq(MySerializer)
+      end
 
-      expect(render_args[:serializer]).to eq(MySerializer)
+      it 'uses object_render_opts' do
+        expect_any_instance_of(BazService).to receive(:qux).with(:context) do
+          { object: :some_obj, status: :ok }
+        end
+        controller.show
+        expect(@render_args[:serializer]).to eq(MyObjectSerializer)
+      end
+
+      it 'uses error_render_opts' do
+        expect_any_instance_of(BazService).to receive(:qux).with(:context) do
+          { errors: [], status: :not_valid }
+        end
+        controller.show
+        expect(@render_args[:serializer]).to eq(MyErrorSerializer)
+      end
     end
 
     class MySerializer
+    end
+
+    class MyObjectSerializer
+    end
+
+    class MyErrorSerializer
     end
 
     class FooContextBuilder

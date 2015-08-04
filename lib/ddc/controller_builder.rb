@@ -90,13 +90,14 @@ module DDC
           respond_to do |format|
             format.json do
               if obj.nil?
-                render_opts = {
-                  json: {errors: errors}, status: status }
+                render_opts = { json: {errors: errors}, status: status }
+                render_opts.reverse_merge!(action_desc[:error_render_opts]) if action_desc.has_key? :error_render_opts
               else
                 render_opts = { json: obj, status: status }
+                render_opts.reverse_merge!(action_desc[:object_render_opts]) if action_desc.has_key? :object_render_opts
               end
 
-              render_opts = (action_desc[:render_opts]).merge(render_opts) if action_desc.has_key? :render_opts
+              render_opts.reverse_merge!(action_desc[:render_opts]) if action_desc.has_key? :render_opts
               render render_opts
             end
             format.html do
