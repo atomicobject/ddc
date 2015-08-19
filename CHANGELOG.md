@@ -1,5 +1,10 @@
 # DDC Changelog
 
+### 0.1.5
+
+* remove :render_opts to use :object_render_opts
+* add :errors_render_opts
+
 ### 0.1.4
 
 * remove :serializer and :each_serializer,  use :render_opts to pass a hash
