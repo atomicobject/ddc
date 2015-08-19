@@ -54,7 +54,7 @@ describe DDC::ControllerBuilder do
       end
 
       expect(FooController).to receive(:before_action).with(:my_before_action)
-      subject.build :foo, 
+      subject.build :foo,
         before_actions: [:my_before_action],
         actions: {
           index: {
@@ -65,7 +65,7 @@ describe DDC::ControllerBuilder do
 
     end
 
-    it 'sunny day get params, process, return object and status, render' do 
+    it 'sunny day get params, process, return object and status, render' do
       class FooController
         def current_user; end
         def some_user; end
@@ -89,7 +89,7 @@ describe DDC::ControllerBuilder do
         current_user: :some_user,
         params: {a: :b})) { :context }
 
-      expect_any_instance_of(BazService).to receive(:qux).with(:context) do 
+      expect_any_instance_of(BazService).to receive(:qux).with(:context) do
         { object: :some_obj, status: :ok }
       end
 
@@ -137,7 +137,7 @@ describe DDC::ControllerBuilder do
         current_user: :some_user,
         params: {a: :b})) { :context }
 
-      expect_any_instance_of(BazService).to receive(:qux).with(:context) do 
+      expect_any_instance_of(BazService).to receive(:qux).with(:context) do
         { status: :error, errors: ["BOOM"] }
       end
 
@@ -151,7 +151,7 @@ describe DDC::ControllerBuilder do
         def some_user; end
         def render(args); end
       end
-      subject.build :foo, 
+      subject.build :foo,
         params: [:current_user, :params],
         actions: {
           index: {
@@ -176,49 +176,88 @@ describe DDC::ControllerBuilder do
       def qux(context) {} end
     end
 
-    it 'uses specified serializer json render calls' do
-      class FooController
-        def current_user; end
-        def some_user; end
-        def render(args); end
-        def respond_to; end
-      end
-      controller = FooController.new
-      expect(controller).to receive_messages( params: {a: :b})
+    context 'render_opts' do
 
+      let (:controller) {
+        class FooController
+          def current_user; end
+          def some_user; end
+          def render(args); end
+          def respond_to; end
+        end
+        FooController.new
+      }
+      before do
+        expect(controller).to receive_messages( params: {a: :b})
 
-      subject.build :foo, 
-        actions: {
-          index: {
-            context: 'foo_context_builder#bar',
-            service: 'baz_service#qux',
-            render_opts: {
-              serializer: MySerializer
+        subject.build :foo,
+          actions: {
+            index: {
+              context: 'foo_context_builder#bar',
+              service: 'baz_service#qux',
+              render_opts: {
+                serializer: MySerializer
+              }
+            },
+            show: {
+              context: 'foo_context_builder#bar',
+              service: 'baz_service#qux',
+              render_opts: {
+                serializer: MySerializer
+              },
+              object_render_opts: {
+                serializer: MyObjectSerializer
+              },
+              error_render_opts: {
+                serializer: MyErrorSerializer
+              },
             }
+
           }
 
-        }
-
-      render_args = nil
-      expect(controller).to receive(:render) do |args|
-        render_args = args
-      end
-      expect(controller).to receive(:respond_to) do |&block|
-        block.call(json_format)
-      end
-      expect_any_instance_of(FooContextBuilder).to receive(:bar).with(hash_including(
-        params: {a: :b})) { :context }
-
-      expect_any_instance_of(BazService).to receive(:qux).with(:context) do 
-        { object: :some_obj, status: :ok }
+        @render_args = nil
+        expect(controller).to receive(:render) do |args|
+          @render_args = args
+        end
+        expect(controller).to receive(:respond_to) do |&block|
+          block.call(json_format)
+        end
+        expect_any_instance_of(FooContextBuilder).to receive(:bar).with(hash_including(
+          params: {a: :b})) { :context }
       end
 
-      controller.index
-      
-      expect(render_args[:serializer]).to eq(MySerializer)
+      it 'uses specified serializer json render calls' do
+        expect_any_instance_of(BazService).to receive(:qux).with(:context) do
+          { object: :some_obj, status: :ok }
+        end
+        controller.index
+        expect(@render_args[:serializer]).to eq(MySerializer)
+      end
+
+      it 'uses object_render_opts' do
+        expect_any_instance_of(BazService).to receive(:qux).with(:context) do
+          { object: :some_obj, status: :ok }
+        end
+        controller.show
+        expect(@render_args[:serializer]).to eq(MyObjectSerializer)
+      end
+
+      it 'uses error_render_opts' do
+        expect_any_instance_of(BazService).to receive(:qux).with(:context) do
+          { errors: [], status: :not_valid }
+        end
+        controller.show
+        expect(@render_args[:serializer]).to eq(MyErrorSerializer)
+      end
     end
 
     class MySerializer
+    end
+
+    class MyObjectSerializer
+    end
+
+    class MyErrorSerializer
     end
 
     class FooContextBuilder
@@ -228,7 +267,42 @@ describe DDC::ControllerBuilder do
     class BazService
       def qux(context) {} end
     end
-  end
 
+    class MultiContextBuilder
+      def foo(opts) {foo: 2} end
+      def bar(opts) {bar: 3} end
+    end
+
+    class MultiContextService
+      def check(ctx)
+        {status: :ok, object: ctx[:foo] + ctx[:bar]}
+      end
+    end
+
+    it 'supports multiple contexts' do
+      class FooController
+        def render(args); end
+        def respond_to; end
+      end
+      subject.build :foo, actions: {
+        index: {
+          context_params: [],
+          contexts: ['multi_context_builder#foo', 'multi_context_builder#bar'],
+          service: 'multi_context_service#check'
+        }
+      }
+      expect(Object.const_get("FooController")).not_to be_nil
+      controller = Object.const_get("FooController").new
+      render_args = nil
+      expect(controller).to receive(:render) do |args|
+        render_args = args
+      end
+      expect(controller).to receive(:respond_to) do |&block|
+        block.call(json_format)
+      end
+      controller.index
+      expect(render_args[:json]).to eq(5)
+    end
+  end
 end
 

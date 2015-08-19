@@ -45,18 +45,32 @@ module DDC
         end
       end
 
+      def reduce_contexts(contexts, context_params)
+        computed_contexts = contexts.map do |context_klass, context_method|
+          context_klass.new.send(context_method, context_params)
+        end
+        if computed_contexts.size == 1
+          computed_contexts.first
+        else
+          computed_contexts.reduce({}) do |h, ctx|
+            h.merge(ctx)
+          end.with_indifferent_access
+        end
+      end
+
       def setup_action!(controller_name, klass, action, action_desc, config)
         raise "Must specify a service for each action" unless action_desc[:service].present?
-        raise "Must specify a context for each action" unless action_desc[:context].present?
+        raise "Must specify a context for each action" unless (action_desc[:context].present? || action_desc[:contexts].present?)
         proc_klass, proc_method = parse_class_and_method(action_desc[:service])
-        context_klass, context_method = parse_class_and_method(action_desc[:context])
+        contexts = (action_desc[:contexts] || [action_desc[:context]]).map { |ctx| parse_class_and_method ctx }
+        #context_klass, context_method = parse_class_and_method(action_desc[:context])
 
         klass.send :define_method, action do
           context_params = (action_desc[:context_params] || config[:context_params] || DEFAULT_CONTEXT_PARAMS).inject({}) do |h, param|
             h[param] = send param
             h
           end
-          context = context_klass.new.send(context_method, context_params)
+          context = DDC::ControllerBuilder.reduce_contexts contexts, context_params
 
           result = proc_klass.new.send(proc_method, context)
           obj = result[:object]
@@ -76,13 +90,14 @@ module DDC
           respond_to do |format|
             format.json do
               if obj.nil?
-                render_opts = {
-                  json: {errors: errors}, status: status }
+                render_opts = { json: {errors: errors}, status: status }
+                render_opts.reverse_merge!(action_desc[:error_render_opts]) if action_desc.has_key? :error_render_opts
               else
                 render_opts = { json: obj, status: status }
+                render_opts.reverse_merge!(action_desc[:object_render_opts]) if action_desc.has_key? :object_render_opts
               end
 
-              render_opts = (action_desc[:render_opts]).merge(render_opts) if action_desc.has_key? :render_opts
+              render_opts.reverse_merge!(action_desc[:render_opts]) if action_desc.has_key? :render_opts
               render render_opts
             end
             format.html do
