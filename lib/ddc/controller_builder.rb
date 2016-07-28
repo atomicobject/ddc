@@ -12,20 +12,21 @@ module DDC
     }
     class << self
       def build(controller_name, config)
-        klass = find_or_create_class(controller_name)
+        klass = find_or_create_class(controller_name, config)
         setup_before_actions!(klass, config)
         setup_actions!(controller_name, klass, config)
         klass
       end
 
 
-      def find_or_create_class(controller_name)
+      def find_or_create_class(controller_name, config)
         controller_klass_name = controller_name.to_s.camelize+'Controller'
+        parent_klass = config[:parent] || ApplicationController
         klass = nil
         if Object.qualified_const_defined?(controller_klass_name)
           klass = Object.qualified_const_get(controller_klass_name)
         else
-          klass = Class.new(ApplicationController)
+          klass = Class.new(parent_klass)
           Object.qualified_const_set(controller_klass_name, klass)
         end
       end

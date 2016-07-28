@@ -48,6 +48,21 @@ describe DDC::ControllerBuilder do
       }}}).to raise_exception
     end
 
+    it 'uses the provided parent class' do
+      class DarthVader
+      end
+
+      klass = subject.build :foo,
+        parent: DarthVader,
+        actions: {
+          index: {
+            context: 'foo_context_builder#bar',
+            service: 'baz_service#qux'
+          }
+        }
+      expect(klass.ancestors[1]).to be(DarthVader)
+    end
+
     it 'adds the before actions' do
       class FooController
         def self.before_action(*args);end
