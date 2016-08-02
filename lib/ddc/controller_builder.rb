@@ -35,8 +35,8 @@ module DDC
 
       def specific_const_set(path, klass)
         path_pieces = path.split("::")
-        mod_name = path_pieces[0..-2].join("::").present?
-        mod = mod_name ? Object.const_get(mod_name) : Object
+        mod_name = path_pieces[0..-2].join("::")
+        mod = mod_name.present? ? Object.const_get(mod_name) : Object
         mod.const_set(path_pieces.last, klass)
       end
 

@@ -1,5 +1,9 @@
 # DDC Changelog
 
+### 0.1.7
+
+* patch to fix 0.1.6 bug
+
 ### 0.1.6
 
 * remove use of `qualified_const_*` calls to fix a bug with global lookup
