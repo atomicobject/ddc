@@ -1,5 +1,10 @@
 # DDC Changelog
 
+### 0.1.6
+
+* remove use of `qualified_const_*` calls to fix a bug with global lookup
+* add :parent option
+
 ### 0.1.5
 
 * remove :render_opts to use :object_render_opts
