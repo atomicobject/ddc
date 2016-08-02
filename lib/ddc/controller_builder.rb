@@ -18,19 +18,41 @@ module DDC
         klass
       end
 
+ 
+      def specific_const_defined?(path)
+        path.split("::").inject(Object) do |mod, name|
+          return unless mod.const_defined?(name, false)
+          mod.const_get(name, false)
+        end
+        return true
+      end
 
-      def find_or_create_class(controller_name, config)
-        controller_klass_name = controller_name.to_s.camelize+'Controller'
-        parent_klass = config[:parent] || ApplicationController
-        klass = nil
-        if Object.qualified_const_defined?(controller_klass_name)
-          klass = Object.qualified_const_get(controller_klass_name)
-        else
-          klass = Class.new(parent_klass)
-          Object.qualified_const_set(controller_klass_name, klass)
+      def specific_const_get(path)
+        path.split("::").inject(Object) do |mod, name|
+          mod.const_get(name, false)
         end
       end
 
+      def specific_const_set(path, klass)
+        path_pieces = path.split("::")
+        mod_name = path_pieces[0..-2].join("::").present?
+        mod = mod_name ? Object.const_get(mod_name) : Object
+        mod.const_set(path_pieces.last, klass)
+      end
+
+      def find_or_create_class(controller_name, config)
+        controller_klass_name = controller_name.to_s.camelize+'Controller'
+        klass = nil
+        if specific_const_defined?(controller_klass_name)
+          klass = specific_const_get(controller_klass_name)
+        else
+          parent_klass = config[:parent] || ApplicationController
+          klass = Class.new(parent_klass)
+          specific_const_set(controller_klass_name, klass)
+        end
+        klass
+      end
+ 
       def setup_before_actions!(klass, config)
         (config[:before_actions] || []).each do |ba|
           klass.before_action ba
