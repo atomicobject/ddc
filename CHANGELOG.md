@@ -1,5 +1,9 @@
 # DDC Changelog
 
+### 0.1.8
+
+* ResponseBuilder#delete no longer requires arg
+
 ### 0.1.7
 
 * patch to fix 0.1.6 bug

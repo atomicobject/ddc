@@ -16,7 +16,7 @@ module DDC
       {status: :not_valid, errors: obj.errors.to_hash}
     end
 
-    def deleted(obj)
+    def deleted
       {status: :deleted}
     end
   end
