@@ -1,5 +1,9 @@
 # DDC Changelog
 
+### 0.1.9
+
+* Rails 5 compat
+
 ### 0.1.8
 
 * ResponseBuilder#delete no longer requires arg
