@@ -31,21 +31,21 @@ describe DDC::ControllerBuilder do
     end
 
     it 'raises if there are no actions defined' do
-      expect(->{subject.build :foo, actions: {}}).to raise_exception
-      expect(->{subject.build :foop, {}}).to raise_exception
+      expect(->{subject.build :foo, actions: {}}).to raise_exception(RuntimeError, "Must specify actions")
+      expect(->{subject.build :foop, {}}).to raise_exception(RuntimeError, "Must specify actions")
     end
 
     it 'raises if an action is missing context' do
       expect(->{subject.build :foo, actions: {foo: {
         context_params: [:current_user, :params],
         service: 'baz_service#qux'
-      }}}).to raise_exception
+      }}}).to raise_exception(RuntimeError, "Must specify a context for each action")
     end
 
     it 'raises if an action is missing service' do
       expect(->{subject.build :foo, actions: {foo: {
         context: 'foo_context_builder#bar',
-      }}}).to raise_exception
+      }}}).to raise_exception(RuntimeError, "Must specify a service for each action")
     end
 
     it 'uses the provided parent class' do
